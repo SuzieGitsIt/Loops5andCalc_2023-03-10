@@ -1,0 +1,110 @@
+# File:     LoopandScreenCalc_2023_03_09
+# Version:  0.0.01
+# Author:   Susan Haynes
+# Comments/Notes: 
+#   (0,0) coordinates are the top left corner of the screen for 1920x1080
+#   (0,0) coordinates are the bottom right corner of the screen for 1919x1079
+# Online References: 
+#   https://pypi.org/project/PyAutoGUI/
+#   https://pyautogui.readthedocs.io/en/latest/mouse.html
+# Revision History: N/A 
+# To find the location on a screen open IDLE 
+# >>> import pyautogui      <- this allows us to use pyautogui prompts
+# >>> pyautogui.size()    <- this returns the size of the monitor
+# >>> pyautogui.position()  <- this returns the exact location of where the mouse pointer is
+
+import pyautogui
+import subprocess                                                       # Needed to open an executable
+import cv2                                                              # Needed for finding images on the screen
+import time                                                             # Needed to call time to count/pause
+import psutil,os                                                        # Needed for closing an executable
+from PIL import Image                                                   # For opening images for testing, pillow package.
+from python_imagesearch.imagesearch import imagesearch                  # For opening images for testing, pip package.
+from asyncore import read                                               # Import the library read, used for doing more than one task at a time
+from tkinter import *                                                   # Import the library tkinter, used for checking which button was pressed.
+
+# Open image of Main screen to find buttons from images in project folder.
+#img = Image.open('C:\\Users\shaynes\OneDrive - RxSight, Inc\Desktop\OCT XY-Stage\\Z-1Main.png')
+#img.show()
+
+# Find screen size and write values to script
+screenWidth, screenHeight = pyautogui.size()                            # Returns two integers, the width and height of the screen. (The primary monitor, in multi-monitor setups.)
+currentMouseX, currentMouseY = pyautogui.position()                     # Returns two integers, the x and y of the mouse cursor's current position.
+
+# Test of message boxes
+pyautogui.alert('Operator needs to manually adjust the focal value, dispersion compensation B, and dispersion compensation C, and contrast bar until the image is in focus.')
+pyautogui.confirm('Press OK to continue running the scripts after adjustments have been completed. WARNING: You will not have the option to go back after pressing OK.')
+
+# Determine which button was pressed in tkinter
+app = Tk()                                                              # Create a GUI app                             
+def which_button(button_press):                                         # Create a function with one parameter, i.e., of the text you want to show when button is clicked
+    b1 = Button(app, text="0.15",                                       # Creating and displaying of button b1
+            command=lambda m="You chose 0.15": which_button(m))
+    b1.grid(padx=10, pady=10)                                           # Creating and displaying of button b2
+    b2 = Button(app, text="0.40",
+            command=lambda m="You chose 0.40": which_button(m))
+    b2.grid(padx=10, pady=10)
+    app.mainloop()                                                      # Make the infinite loop for displaying the app
+
+pyautogui.confirm('Do you want to test 0.15, 0.40, or Calibration?', buttons=['0.15', '0.40', 'Calibration'])
+initials = input('Enter the operators initials: ')
+project = input('Enter the 6-digit Project Name: ')
+password = input('Enter password (to continue script') # 123
+
+# Take a screenshot to scan and compare pictures with the screenshot for mismatched size buttons.
+im1 = pyautogui.screenshot()
+im1.save('my_screenshot.png')
+im2 = pyautogui.screenshot('my_screenshot2.png')
+
+# Locates & clicks center of the button loation on the screen from a screenshot saved in project folder.
+StartScan = pyautogui.locateCenterOnScreen(r"\\RXS-FS-02\userdocs\shaynes\My Documents\R&D - Software\Python\LoopandScreenCalc_2023-03-09\StartScan.png") # Returns (left, top, width, height) of matching region
+pyautogui.click()                                                          # Click the mouse at its current location.
+buttonx, buttony = pyautogui.center(StartScan)                             # Find the center of where the button was found
+pyautogui.click(buttonx, buttony)                                          # Click the center of where the button was found
+
+# Locates & clicks center of the button loation on the screen from a screenshot saved in project folder.
+#buttonx, buttony = pyautogui.locateCenterOnScreen(r"\\RXS-FS-02\userdocs\shaynes\My Documents\R&D - Software\Python\LoopandScreenCalc_2023-03-09\StartScan.png") # Returns (x, y) of matching region
+#pyautogui.click(buttonx, buttony)                                           # clicks the center of where the button was found
+
+# Look for a matching image on the screen from a screenshot saved in project folder, then click on it.
+pyautogui.click(pyautogui.locateCenterOnScreen(r"\\RXS-FS-02\userdocs\shaynes\My Documents\R&D - Software\Python\LoopandScreenCalc_2023-03-09\SaveB-ScanIm.png"))
+pyautogui.click(pyautogui.locateCenterOnScreen(r"\\RXS-FS-02\userdocs\shaynes\My Documents\R&D - Software\Python\LoopandScreenCalc_2023-03-09\Main.png"))     
+pyautogui.click(pyautogui.locateCenterOnScreen(r"\\RXS-FS-02\userdocs\shaynes\My Documents\R&D - Software\Python\LoopandScreenCalc_2023-03-09\Review.png"))      
+pyautogui.click(pyautogui.locateCenterOnScreen(r"\\RXS-FS-02\userdocs\shaynes\My Documents\R&D - Software\Python\LoopandScreenCalc_2023-03-09\Configuration.png"))             
+pyautogui.click(pyautogui.locateCenterOnScreen(r"\\RXS-FS-02\userdocs\shaynes\My Documents\R&D - Software\Python\LoopandScreenCalc_2023-03-09\Advanced.png"))             
+pyautogui.click(pyautogui.locateCenterOnScreen(r"\\RXS-FS-02\userdocs\shaynes\My Documents\R&D - Software\Python\LoopandScreenCalc_2023-03-09\01FolderName.png"))            
+pyautogui.click(pyautogui.locateCenterOnScreen(r"\\RXS-FS-02\userdocs\shaynes\My Documents\R&D - Software\Python\LoopandScreenCalc_2023-03-09\01SampleName.png"))             
+
+# Open the calculator, and pause for 2 seconds before executing, this gives the calculator time to open.
+subprocess.Popen('C:\\Windows\\System32\\calc.exe')                     # Open windows calculator
+time.sleep(2)                                                           # wait 2 seconds
+
+# Declare starting position and positions to move to
+y = 985                                                                 # y starting location
+y_p = 50                                                                # y position to down row on the calculator
+while y < 1100 :                                                        # loop until x reaches a value of 1559 (3rd column position on calculator)      
+
+    x = 1395                                                            # x starting location
+    x_p = 60                                                            # x position to move over 1 column on the calculator
+    while x < 1560:                                                     # loop until y reaches a value of 1099 (3rd row position on calculator)
+
+        pyautogui.moveTo(x, y, duration=0.1, tween=pyautogui.easeInOutQuad) # Use tweening/easing function to move mouse over 1 second.
+        pyautogui.click()
+
+        pyautogui.moveTo(1605, 1145, duration=0.1, tween=pyautogui.easeInOutQuad) # =
+        pyautogui.click()  
+
+        if x < 1560 and y < 1100 :                                     # if x is in the bottom row and y is in the 3rd column, go to the else statement
+            pyautogui.moveTo(1605, 1085, duration=0.1, tween=pyautogui.easeInOutQuad) # +
+            pyautogui.click()  
+            print("X-Position initial: ", x)            
+            x += x_p           
+            print("X-Position end of loop: ", x)       
+        
+    print("Y-Position initial: ", y)
+    y += y_p
+    print("Y-Position end of loop: ", y)  
+
+time.sleep(5)                                                           # wait 5 seconds to view the results
+os.system("TaskKill /F /IM CalculatorApp.exe")                          # Close windows calculator
+exit()
